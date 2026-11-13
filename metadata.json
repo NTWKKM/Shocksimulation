@@ -1,6 +1,6 @@
 {
   "name": "Shocksimulation",
-  "description": "Interactive 3D physiological shock and Windkessel hemodynamic simulator with procedural anatomical cutaway and real-time ODE physics.",
+  "description": "Fixed-angle isometric architectural plate and Windkessel hemodynamic physiological shock simulator with real-time ODE physics and interactive WebGL pulse telemetry.",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

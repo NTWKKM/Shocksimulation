@@ -2,7 +2,7 @@ import type { AnatomyFocusId } from '../physics/hemodynamics';
 
 interface TopBarProps {
   selectedPart: AnatomyFocusId | null;
-  onSelectAnatomy: (partId: AnatomyFocusId) => void;
+  onSelectAnatomy: (partId: AnatomyFocusId | null) => void;
   onOpenReference: () => void;
 }
 
@@ -15,18 +15,18 @@ const ANATOMY_NAV_ITEMS: Array<{ id: AnatomyFocusId; label: string }> = [
 
 export function TopBar({ selectedPart, onSelectAnatomy, onOpenReference }: TopBarProps) {
   return (
-    <header className="relative z-20 flex items-center justify-between gap-8 border-b border-[#CBBBA2] bg-[#FBF7EC] px-6 py-3">
+    <header className="relative z-20 flex items-center justify-between gap-6 border-b border-[var(--anatomy-rule)] bg-[var(--anatomy-card)] px-5 py-2.5">
       <button
         type="button"
-        onClick={() => onSelectAnatomy('aorta-map')}
-        className="font-atlas-serif text-2xl font-bold tracking-tight text-[#231A15] whitespace-nowrap shrink-0 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9E2A2B]"
+        onClick={() => onSelectAnatomy(null)}
+        className="font-mono-tabular text-base font-semibold tracking-tight text-[var(--anatomy-strong)] whitespace-nowrap shrink-0 text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--anatomy-lit)]"
       >
         Shocksimulation
       </button>
 
       <nav
         aria-label="Anatomical inspection focus"
-        className="hidden md:flex items-center gap-6 text-sm font-medium text-[#5C4D42]"
+        className="hidden md:flex items-center gap-6 text-xs font-medium text-[var(--anatomy-muted)]"
       >
         {ANATOMY_NAV_ITEMS.map((item) => {
           const isActive = selectedPart === item.id;
@@ -34,11 +34,11 @@ export function TopBar({ selectedPart, onSelectAnatomy, onOpenReference }: TopBa
             <button
               key={item.id}
               type="button"
-              onClick={() => onSelectAnatomy(item.id)}
-              className={`whitespace-nowrap shrink-0 transition-colors duration-150 pb-0.5 border-b-2 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#9E2A2B] ${
+              onClick={() => onSelectAnatomy(isActive ? null : item.id)}
+              className={`whitespace-nowrap shrink-0 pb-0.5 border-b transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--anatomy-lit)] ${
                 isActive
-                  ? 'border-[#9E2A2B] text-[#231A15] font-semibold'
-                  : 'border-transparent hover:text-[#231A15] hover:border-[#B8A68B]'
+                  ? 'border-[var(--anatomy-lit)] text-[var(--anatomy-strong)] font-semibold'
+                  : 'border-transparent hover:text-[var(--anatomy-strong)] hover:border-[var(--anatomy-mid)]'
               }`}
             >
               {item.label}
@@ -51,7 +51,7 @@ export function TopBar({ selectedPart, onSelectAnatomy, onOpenReference }: TopBa
         <button
           type="button"
           onClick={onOpenReference}
-          className="px-4 py-2 text-xs font-semibold text-[#FBF7EC] bg-[#2B201A] rounded-sm border border-[#231A15] hover:bg-[#3E2E26] transition-colors duration-150 whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9E2A2B]"
+          className="px-3.5 py-1.5 font-mono-tabular text-[11px] font-medium uppercase tracking-[0.06em] text-[var(--anatomy-card)] bg-[var(--anatomy-strong)] border border-[var(--anatomy-strong)] hover:opacity-90 transition-opacity duration-150 whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--anatomy-lit)]"
         >
           Clinical Reference
         </button>

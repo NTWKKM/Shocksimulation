@@ -10,7 +10,7 @@ import {
   type ShockPresetId,
 } from './physics/hemodynamics';
 import { ANATOMY_REFERENCES } from './data/clinicalReference';
-import { AnatomyStage25D } from './components/AnatomyStage25D';
+import { IsometricRigStage } from './components/IsometricRigStage';
 import { TopBar } from './components/TopBar';
 import { TelemetryHud, type WaveformSample } from './components/TelemetryHud';
 import { ControlDock } from './components/ControlDock';
@@ -55,6 +55,7 @@ export default function App() {
   const [selectedPart, setSelectedPart] = useState<AnatomyFocusId | null>(null);
   const [hoveredPart, setHoveredPart] = useState<AnatomyFocusId | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [theme, setTheme] = useState<'dark' | 'light'>('light');
   const [dockCollapsed, setDockCollapsed] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth < 768 : false,
   );
@@ -86,7 +87,7 @@ export default function App() {
     return nextTelemetry;
   }, []);
 
-  // Keyboard shortcuts: H toggles bottom dock, Escape closes drawer/zoom focus
+  // Keyboard shortcuts: H toggles control dock, Escape closes drawer/zoom focus
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
@@ -103,7 +104,6 @@ export default function App() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, []);
 
-  // Keep mobile viewport unobstructed when resizing across the md breakpoint
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 767px)');
     const onChange = (e: MediaQueryListEvent) => {
@@ -167,7 +167,8 @@ export default function App() {
 
   return (
     <div
-      className="relative flex h-screen w-screen flex-col overflow-hidden bg-[#F6EFE0] text-[#231A15]"
+      className="iso relative flex h-screen w-screen flex-col overflow-hidden"
+      data-theme={theme}
       data-status={telemetry.status}
     >
       <TopBar
@@ -176,70 +177,71 @@ export default function App() {
         onOpenReference={() => setDrawerOpen((prev) => !prev)}
       />
 
-      {/* Main 2D Netter Anatomical Plate Stage + Side Reference Drawer */}
-      <div className="relative flex flex-1 overflow-hidden">
-        <main className="relative flex-1 overflow-hidden">
-        <div data-testid="cardio-25d-stage" className="absolute inset-0 h-full w-full">
-          <AnatomyStage25D
-            selectedPart={selectedPart}
-            hoveredPart={hoveredPart}
-            drawerOpen={drawerOpen}
-            onSelectPart={handleSelectAnatomy}
-            onHoverPart={setHoveredPart}
-            onStepPhysics={handleStepPhysics}
+      {/* Main Isometric Plate Workspace + Side Reference Drawer */}
+      <div className="relative flex flex-1 min-h-0 overflow-hidden">
+        <div className="flex flex-1 flex-col min-w-0 min-h-0 overflow-hidden">
+          <main className="flex flex-1 flex-col lg:flex-row gap-3.5 p-3.5 md:p-4 min-h-0 overflow-y-auto lg:overflow-hidden">
+            {/* Left Rail Telemetry & Active Focus Summary */}
+            <div className="w-full lg:w-[308px] shrink-0 flex flex-col gap-3 lg:overflow-y-auto">
+              <TelemetryHud telemetry={telemetry} inputs={inputs} waveform={waveform} />
+
+              {activeCallout && !drawerOpen && (
+                <div className="border border-[var(--anatomy-rule)] bg-[var(--anatomy-card)] p-3.5">
+                  <div className="font-mono-tabular text-[10.5px] font-semibold text-[var(--anatomy-red)]">
+                    {activeCallout.parameterTag}
+                  </div>
+                  <div className="mt-0.5 text-base font-bold text-[var(--anatomy-strong)] leading-snug">
+                    {activeCallout.titleEn}
+                  </div>
+                  <p className="mt-1 text-xs text-[var(--anatomy-text)] line-clamp-3">
+                    {activeCallout.summaryTh}
+                  </p>
+                  <div className="mt-2.5 flex items-center justify-between pt-2 border-t border-[var(--anatomy-rule-soft)]">
+                    <span className="font-mono-tabular text-[11px] text-[var(--anatomy-muted)]">
+                      {activeCallout.normalRange}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setDrawerOpen(true)}
+                      className="font-mono-tabular text-[11px] font-semibold text-[var(--anatomy-strong)] hover:underline whitespace-nowrap"
+                    >
+                      Read Details
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Primary Fixed-Angle Isometric Rig Plate */}
+            <div className="flex-1 min-w-0 min-h-[300px] sm:min-h-[360px] lg:min-h-0 flex">
+              <IsometricRigStage
+                selectedPart={selectedPart}
+                hoveredPart={hoveredPart}
+                theme={theme}
+                inputs={inputs}
+                onSelectPart={handleSelectAnatomy}
+                onHoverPart={setHoveredPart}
+                onStepPhysics={handleStepPhysics}
+              />
+            </div>
+          </main>
+
+          {/* Bottom Hemodynamic Control Dock */}
+          <ControlDock
+            inputs={inputs}
+            telemetry={telemetry}
+            activePreset={activePreset}
+            collapsed={dockCollapsed}
+            theme={theme}
+            onToggleCollapse={() => setDockCollapsed((prev) => !prev)}
+            onToggleTheme={() => setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))}
+            onSelectPreset={handleSelectPreset}
+            onChangeInput={handleChangeInput}
+            onReset={handleReset}
           />
         </div>
 
-        {/* Semantic HUD Overlays */}
-        <div className="pointer-events-none relative z-10 flex h-full w-full flex-col justify-between p-4 md:p-5">
-          <div className="flex items-start justify-between gap-4">
-            <TelemetryHud telemetry={telemetry} inputs={inputs} waveform={waveform} />
-
-            {/* Contextual Anatomical Callout */}
-            {activeCallout && !drawerOpen && (
-              <div className="pointer-events-auto hidden sm:block w-[290px] rounded-sm border border-[#B8A68B] bg-[#FBF7EC]/95 p-3.5 shadow-[0_2px_10px_rgba(35,26,21,0.08)]">
-                <div className="text-[11px] font-semibold text-[#9E2A2B]">
-                  {activeCallout.parameterTag}
-                </div>
-                <div className="font-atlas-serif mt-0.5 text-lg font-bold text-[#231A15] leading-snug">
-                  {activeCallout.titleEn}
-                </div>
-                <p className="mt-1 text-xs text-[#5C4D42] line-clamp-3">
-                  {activeCallout.summaryTh}
-                </p>
-                <div className="mt-2.5 flex items-center justify-between pt-2 border-t border-[#E3D8C2]">
-                  <span className="font-mono-tabular text-[11px] text-[#7C6D60]">
-                    {activeCallout.normalRange}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setDrawerOpen(true)}
-                    className="text-xs font-semibold text-[#9E2A2B] hover:underline whitespace-nowrap"
-                  >
-                    Read Details
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Collapsible Bottom Control Dock */}
-        <ControlDock
-          inputs={inputs}
-          telemetry={telemetry}
-          activePreset={activePreset}
-          collapsed={dockCollapsed}
-          drawerOpen={drawerOpen}
-          onToggleCollapse={() => setDockCollapsed((prev) => !prev)}
-          onSelectPreset={handleSelectPreset}
-          onChangeInput={handleChangeInput}
-          onReset={handleReset}
-        />
-
-        </main>
-
-        {/* Slide-over Reference Drawer */}
+        {/* Slide-over Clinical Reference Drawer */}
         <ReferenceDrawer
           open={drawerOpen}
           selectedPart={selectedPart}
