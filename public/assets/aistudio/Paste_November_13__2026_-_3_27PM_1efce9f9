@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shock Simulator V16.4 (Stable Day Mode + Final Bold Format)</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif; padding: 15px;
+            max-width: 1200px; margin: auto; background-color: #f4f7f6;
+        }
+        .simulator-grid {
+            display: grid; grid-template-columns: 320px 1fr;
+            gap: 15px; margin-bottom: 20px;
+        }
+        .controls, .display, .info-container {
+            background: #ffffff; padding: 15px; border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+        .controls h2 {
+            margin-top: 0; margin-bottom: 15px;
+            border-bottom: 2px solid #eee; padding-bottom: 10px;
+        }
+        .control-group { margin-bottom: 8px; }
+        .control-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        
+        /* ใช้ Slider Native ของ Browser */
+        .control-group input[type="range"] { width: 100%; }
+        
+        .control-group input[type="range"]:disabled {
+            background: #eee; opacity: 0.7; cursor: not-allowed;
+        }
+        .control-group label.disabled { color: #999; }
+        
+        .normal-range {
+            font-size: 0.85em; font-weight: normal;
+            color: #555; margin-left: 5px;
+        }
+        .cvp-group {
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .cvp-group label { margin-bottom: 0; }
+        .value-context-line {
+            display: flex; justify-content: space-between;
+            align-items: baseline; margin-top: 2px;
+        }
+        .value-context-line span { font-size: 0.9em; color: #555; }
+        .lvef-context, .edv-context, .svr-context {
+            font-size: 0.9em; font-weight: bold;
+            text-align: right; padding: 0; height: auto;
+        }
+        .context-good, .context-normal { color: #28a745; }
+        .context-mod, .context-low { color: #ffc107; }
+        .context-poor, .context-very-low { color: #dc3545; }
+        .context-high { color: #6f42c1; }
+
+        .compensation-toggle { display: flex; align-items: center; font-weight: bold; color: #0056b3; }
+        .compensation-toggle input { margin-right: 10px; height: 18px; width: 18px; }
+        .compensated-text { font-size: 0.9em; font-weight: bold; color: #dc3545; margin-left: 5px; }
+
+        .presets button {
+            width: 100%; padding: 10px; margin-top: 8px;
+            background-color: #007bff; color: white; border: none;
+            border-radius: 5px; cursor: pointer; font-size: 1em;
+        }
+        .presets button:hover { background-color: #0056b3; }
+        
+        .map-output { text-align: center; margin-bottom: 10px; }
+        .map-title { font-size: 1.3rem; font-weight: bold; color: #333; }
+        #map-value { font-size: 2.5rem; font-weight: bold; margin: 0 5px; }
+        .map-unit { font-size: 1.3rem; color: #555; }
+        .equation-display {
+            text-align: center; font-size: 1.3em;
+            font-weight: bold; margin: 10px 0;
+            padding: 8px; background-color: #f8f9fa; border-radius: 5px; word-wrap: break-word;
+        }
+        .equation-display span { color: #0056b3; padding: 0 4px; }
+        .control-group input[type="number"] {
+            width: 60px; font-size: 0.9em; padding: 5px;
+            border: 1px solid #ccc; border-radius: 4px;
+        }
+        .charts-container {
+            display: flex; flex-direction: column;
+            gap: 10px; margin-top: 15px;
+        }
+        .chart-wrapper {
+            width: 100%; height: 240px; position: relative;
+        }
+        .ref-formula {
+            text-align: center; font-size: 1em; font-style: italic;
+            color: #555; margin-top: 15px; padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+        .ref-formula strong { font-style: normal; color: #333; }
+        .map-normal { color: #28a745; }
+        .map-warning { color: #ffc107; }
+        .map-danger { color: #dc3545; }
+
+        .reset-button {
+            width: 100%; padding: 8px; margin-top: 10px;
+            font-size: 0.9em; font-weight: bold; color: #dc3545;
+            background-color: #fff; border: 2px solid #dc3545;
+            border-radius: 5px; cursor: pointer;
+        }
+        .reset-button:hover { background-color: #fcf2f2; }
+
+        .info-container {
+            background: #ffffff; padding: 20px 30px; border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); line-height: 1.6;
+            margin-top: 20px;
+        }
+        .info-container h3 { border-bottom: 2px solid #eee; padding-bottom: 10px; color: #0056b3; }
+        .info-container code { background-color: #f1f1f1; padding: 2px 5px; border-radius: 4px; }
+        .info-container ul { padding-left: 20px; }
+        .footer {
+            text-align: center;
+            margin: 50px auto 30px auto;
+            font-size: 0.9em;
+            color: #90AEAD;
+            transition: color 0.3s;
+        }
+
+        /* --- VVVV นี่คือส่วนที่เพิ่มเข้ามา VVVV --- */
+        /* --- Responsive Styles for Mobile View --- */
+        @media (max-width: 850px) {
+            .simulator-grid {
+                /* On screens 850px or less, stack the columns */
+                grid-template-columns: 1fr;
+            }
+
+            .info-container {
+                /* Adjust padding for small screens */
+                padding: 20px 15px;
+            }
+
+            body {
+                /* Reduce body padding on small screens */
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    
+    <div class="simulator-grid">
+        <div class="controls">
+            
+            <div class="control-group compensation-toggle">
+                <input type="checkbox" id="compensate">
+                <label for="compensate">Enable Compensation (Auto)</label>
+            </div>
+            <hr style="margin: 12px 0;">
+
+            <div class="control-group">
+                <label for="hr" id="hr-label">Heart Rate (bpm) <span class="normal-range">(60-100)</span></label>
+                <input type="range" id="hr" min="30" max="220" value="70" step="1">
+                <div class="value-context-line">
+                    <span id="hr-val">70 bpm</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="lvef">LVEF (0.x) - Contractility <span class="normal-range">(0.55-0.70)</span></label>
+                <input type="range" id="lvef" min="0.1" max="0.8" value="0.6" step="0.01">
+                <div class="value-context-line">
+                    <span id="lvef-val">0.60 (60%)</span>
+                    <div class="lvef-context context-good" id="lvef-context">(Good)</div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="edv">EDV (Liters) - Preload <span class="normal-range">(0.10-0.15)</span></label>
+                <input type="range" id="edv" min="0.04" max="0.18" value="0.12" step="0.01">
+                <div class="value-context-line">
+                    <span id="edv-val">0.12 L (120 mL)</span>
+                    <div class="edv-context context-normal" id="edv-context">(Euvolemia)</div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="svr" id="svr-label">SVR (Wood units) - Afterload <span class="normal-range">(8-15)</span></label>
+                <input type="range" id="svr" min="5" max="30" value="12" step="1">
+                <div class="value-context-line">
+                    <span id="svr-val">12 WU</span>
+                    <div class="svr-context context-normal" id="svr-context">(Normal Tone)</div>
+                </div>
+            </div>
+            
+            <div class="control-group cvp-group">
+                <label for="cvp">CVP (mmHg) <span class="normal-range">(2-8)</span></label>
+                <input type="number" id="cvp" min="0" max="30" value="8" step="1">
+            </div>
+            
+            <hr style="margin: 15px 0;">
+            
+            <div class="presets">
+                <button id="btn-normal">Normal</button>
+                <button id="btn-hypovolemic">Hypovolemic Shock</button>
+                <button id="btn-cardiogenic">Cardiogenic Shock</button>
+                <button id="btn-distributive">Distributive Shock</button>
+                <button id="btn-obstructive">Obstructive Shock</button>
+                <button id="btn-arrhythmia">Arrhythmia Shock</button>
+            </div>
+        </div>
+
+        <div class="display">
+            
+            <div class="map-output">
+                <span class="map-title">Mean Arterial Pressure (MAP):</span>
+                <span id="map-value" class="map-normal">68</span>
+                <span class="map-unit">mmHg</span>
+            </div>
+            <div class="equation-display">
+                MAP = (
+                <span id="eq-hr">70</span> x 
+                <span id="eq-lvef">0.60</span> x 
+                <span id="eq-edv">0.12</span> x 
+                <span id="eq-svr">12</span>
+                ) + <span id="eq-cvp">8</span>
+            </div>
+            <div class="charts-container">
+                <div class="chart-wrapper">
+                    <canvas id="mapChart"></canvas>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="varChart"></canvas>
+                </div>
+            </div>
+            <div class="ref-formula">
+                <strong>Reference:</strong> MAP = (HR x LVEF x EDV x SVR) + CVP
+            </div>
+
+            <button id="btn-reset" class="reset-button">Reset Chart & Parameters</button>
+
+        </div>
+    </div>
+
+    <div class="info-container">
+        <h3>🫀 EDV (End-Diastolic Volume) - ตัวแทนของ Preload</h3>
+        <ul>
+            <li><strong>EDV (End-Diastolic Volume)</strong><br>= ปริมาณเลือดในหัวใจห้องล่างซ้าย (Left Ventricle) ณ จุดสิ้นสุดของระยะคลายตัว (Diastole) หรือ "ปริมาณเลือดทั้งหมดที่หัวใจเติมเข้ามาได้เต็มที่" ก่อนที่มันจะเริ่มบีบตัว</li>
+            <li><strong>Circulating Blood Volume (CBV)</strong><br>= ปริมาณเลือดในหลอดเลือดทั้งหมด ซึ่งเป็นส่วนหนึ่งของ TBF(ประมาณ 7-8% ของน้ำหนักตัว) เช่น คนหนัก 70 kg มีเลือดประมาณ 5 ลิตร</li>
+            <li><strong>Total Body Fluid (TBF)</strong><br>= ปริมาณน้ำทั้งหมดในร่างกาย (ประมาณ 60% ของน้ำหนักตัว) เช่น คนหนัก 70 kg จะมี TBF ประมาณ 42 ลิตร TBF ไม่ได้สัมพันธ์โดยตรงกับ EDV ในแบบ 1:1</li>
+        </ul>
+        <p><strong>EDV จึงเป็นตัวแปรที่สะท้อน Preload</strong> ซึ่งสัมพันธ์กับ Venous Return โดยที่ Venous Return ก็จะแปรผันตาม CBV ฉะนั้น <strong>EDV จึงเป็นตัวแทนของ CBV โดยตรง</strong> ไม่ใช่ TBF</p>
+        <hr style="margin: 15px 0; border-top: 1px solid #eee;">
+       <details><summary><strong style="color: #0056b3;">📊 Reference Data: EDV กับสถานะ Volume</color></strong></summary>
+        <p>
+            <li><strong>High (Hypervolemia / Fluid Overload / Heart Failure):</strong>
+                <ul>
+                    <li>EDV: > 150 mL (หรือ 0.15 L)</li>
+                    <li>สถานการณ์: ผู้ป่วยได้รับสารน้ำมากเกินไป (IV fluid overload) หรือ ภาวะหัวใจล้มเหลว (Cardiogenic Shock) ทำให้เลือดคั่งในห้องหัวใจ (Preload สูง)</li>
+                </ul>
+            </li>
+            <li><strong>Normal (Euvolemia):</strong>
+                <ul>
+                    <li>EDV: ≈ 100 - 150 mL (หรือ 0.10 - 0.15 L)</li>
+                    <li>ค่าเฉลี่ย: 120 mL (0.12 L)</li>
+                    <li>สถานการณ์: สภาวะปกติ, Circulating Blood Volume ปกติ (ประมาณ 5 ลิตร)</li>
+                </ul>
+            </li>
+            <li><strong>Low (Mild Hypovolemia):</strong>
+                <ul>
+                    <li>EDV: ≈ 80 - 100 mL (หรือ 0.08 - 0.10 L)</li>
+                    <li>สถานการณ์: ขาดน้ำเล็กน้อย หรือ เสียเลือดระดับ Class I-II (เช่น เสียเลือด 750 - 1500 mL)</li>
+                </ul>
+            </li>
+            <li><strong>Very Low (Severe Hypovolemia):</strong>
+                <ul>
+                    <li>EDV: < 80 mL (หรือ < 0.08 L)</li>
+                    <li>สถานการณ์: Hypovolemic Shock ชัดเจน, เสียเลือดระดับ Class III-IV (เช่น เสียเลือด > 1500-2000 mL) Venous return ลดลงอย่างมาก ทำให้ Preload ต่ำมาก</li>
+                </ul>
+            </li>
+        </p>
+        </details>
+        <hr style="margin: 15px 0; border-top: 1px solid #eee;">
+        <h3>🪵 SVR (Systemic Vascular Resistance) - ตัวแทนของ Afterload</h3>
+        <p><strong>SVR (Systemic Vascular Resistance)</strong><br>= <strong>"ความต้านทานของหลอดเลือด"</strong> ทั่วร่างกาย หรือ <strong>"ความแน่น"</strong> ของหลอดเลือดแดงส่วนปลาย <br>(ซึ่งเป็นตัวแทนของ <strong>Afterload</strong> = แรงต้านที่หัวใจต้องเอาชนะเพื่อบีบเลือดออกไป)</p>
+        <ul>
+            <li><strong>SVR สูง (Vasoconstriction): > 15 WU</strong><br>สถานการณ์: หลอดเลือด "บีบตัว" เพื่อพยายามชดเชย (Compensate) ความดันต่ำ เช่นใน **Hypovolemic Shock** และ **Cardiogenic Shock**</li>
+            <li><strong>SVR ต่ำ (Vasodilation): < 8 WU</strong><br>สถานการณ์: หลอดเลือด "คลายตัว" หรือ "ขยาย" นี่คือปัญหาหลักใน **Distributive Shock** (เช่น Septic หรือ Anaphylactic)</li>
+        </ul>
+        <p><strong>Wood unit (WU) คืออะไร?</strong> เป็นหน่วยวัด SVR ที่คำนวณจากสูตร <code>SVR (WU) = (MAP - CVP) / CO</code> (โดย 1 Wood unit = 80 dyne·s·cm⁻⁵)</p>
+    </div>
+    <div class="footer">
+    &copy; 2025 <a href="https://github.com/NTWKKM/" target="_blank" style="text-decoration: none; color: var(--primary); font-weight: bold;">NTWKKM & Donate</a> &nbsp;|&nbsp; Powered by GitHub Pages
+    </div>
+
+    <script>
+        // --- 1. DOM Elements (เหมือนเดิม) ---
+        const sliders = {
+            hr: document.getElementById('hr'),
+            lvef: document.getElementById('lvef'),
+            edv: document.getElementById('edv'),
+            svr: document.getElementById('svr')
+        };
+        const labels = {
+            hr: document.getElementById('hr-label'),
+            svr: document.getElementById('svr-label')
+        };
+        const cvpInput = document.getElementById('cvp');
+        const values = {
+            hr: document.getElementById('hr-val'),
+            lvef: document.getElementById('lvef-val'),
+            edv: document.getElementById('edv-val'),
+            svr: document.getElementById('svr-val'),
+            edvContext: document.getElementById('edv-context'),
+            svrContext: document.getElementById('svr-context'),
+            lvefContext: document.getElementById('lvef-context')
+        };
+        const equationValues = {
+            hr: document.getElementById('eq-hr'),
+            lvef: document.getElementById('eq-lvef'),
+            edv: document.getElementById('eq-edv'),
+            svr: document.getElementById('eq-svr'),
+            cvp: document.getElementById('eq-cvp')
+        };
+        const mapValueDisplay = document.getElementById('map-value');
+        const compensateCheckbox = document.getElementById('compensate');
+        
+        const MAX_DATA_POINTS = 30;
+        let mapChart, varChart;
+
+        // --- 2. Chart.js Initialization (V15 Logic) ---
+        function initCharts() {
+            const mapCtx = document.getElementById('mapChart').getContext('2d');
+            mapChart = new Chart(mapCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'MAP (mmHg)', data: [],
+                        borderColor: '#dc3545', backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        borderWidth: 3, fill: true
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { display: false } },
+                        y: { min: 30, max: 120 }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+            const varCtx = document.getElementById('varChart').getContext('2d');
+            varChart = new Chart(varCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        { label: 'HR (bpm)', data: [], borderColor: '#007bff', borderWidth: 2, yAxisID: 'y' },
+                        { label: 'SVR (WU)', data: [], borderColor: '#ffc107', borderWidth: 2, yAxisID: 'y1' },
+                        { label: 'LVEF/EDV', data: [], borderColor: '#28a745', borderWidth: 2, yAxisID: 'y2' }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {
+                        x: { ticks: { display: false } },
+                        y: { type: 'linear', position: 'left', min: 30, max: 230 },
+                        y1: { type: 'linear', position: 'right', min: 0, max: 35, grid: { drawOnChartArea: false } },
+                        y2: { type: 'linear', position: 'right', min: 0, max: 1, grid: { drawOnChartArea: false } }
+                    }
+                }
+            });
+        }
+        
+        // --- Reset Charts Function (เหมือนเดิม) ---
+        function resetCharts() {
+            mapChart.data.labels = [];
+            mapChart.data.datasets.forEach(dataset => { dataset.data = []; });
+            mapChart.update('none');
+
+            varChart.data.labels = [];
+            varChart.data.datasets.forEach(dataset => { dataset.data = []; });
+            varChart.update('none');
+        }
+
+        // --- 3. Add Data to Charts Function (เหมือนเดิม) ---
+        function addDataToCharts(hr, lvef, edv, svr, map) {
+            const label = new Date().toLocaleTimeString();
+            mapChart.data.labels.push(label);
+            mapChart.data.datasets[0].data.push(map);
+            if (mapChart.data.labels.length > MAX_DATA_POINTS) {
+                mapChart.data.labels.shift();
+                mapChart.data.datasets.forEach(dataset => dataset.data.shift());
+            }
+            mapChart.update('none');
+            varChart.data.labels.push(label);
+            varChart.data.datasets[0].data.push(hr);
+            varChart.data.datasets[1].data.push(svr);
+            varChart.data.datasets[2].data.push(lvef);
+            if (varChart.data.labels.length > MAX_DATA_POINTS) {
+                varChart.data.labels.shift();
+                varChart.data.datasets.forEach(dataset => dataset.data.shift());
+            }
+            varChart.update('none');
+        }
+
+        
+        // --- ฟังก์ชันเปิด/ปิดโหมด (เหมือนเดิม) ---
+        function toggleCompensationMode(isEnabled) {
+            if (isEnabled) {
+                sliders.hr.disabled = true;
+                sliders.svr.disabled = true;
+                labels.hr.classList.add('disabled');
+                labels.svr.classList.add('disabled');
+            } else {
+                sliders.hr.disabled = false;
+                sliders.svr.disabled = false;
+                labels.hr.classList.remove('disabled');
+                labels.svr.classList.remove('disabled');
+            }
+        }
+        
+        // --- 4. Main Calculation Function (เหมือนเดิม) ---
+        function calculateAndUpdate() {
+            const BASE_HEALTHY_HR = 70;
+            const BASE_HEALTHY_SVR = 12;
+            const BASE_HEALTHY_CO_FACTOR = 0.6 * 0.12; 
+            
+            const lvef = parseFloat(sliders.lvef.value);
+            const edv = parseFloat(sliders.edv.value);
+            let cvpVal = parseFloat(cvpInput.value);
+            if (isNaN(cvpVal)) { cvpVal = 0; cvpInput.value = 0; }
+            if (cvpVal > 30) { cvpVal = 30; cvpInput.value = 30; }
+            if (cvpVal < 0) { cvpVal = 0; cvpInput.value = 0; }
+            const cvp = cvpVal;
+            let calcHR, calcSVR;
+            if (compensateCheckbox.checked) {
+                const currentCOFactor = lvef * edv;
+                const deficitRatio = currentCOFactor / BASE_HEALTHY_CO_FACTOR;
+                if (deficitRatio < 1.0) {
+                    const deficit = 1.0 - deficitRatio; 
+                    calcHR = BASE_HEALTHY_HR + (deficit * 100);
+                    calcSVR = BASE_HEALTHY_SVR + (deficit * 20);
+                } else {
+                    calcHR = BASE_HEALTHY_HR;
+                    calcSVR = BASE_HEALTHY_SVR;
+                }
+                calcHR = Math.max(sliders.hr.min, Math.min(sliders.hr.max, calcHR));
+                calcSVR = Math.max(sliders.svr.min, Math.min(sliders.svr.max, calcSVR));
+                sliders.hr.value = calcHR.toFixed(0);
+                sliders.svr.value = calcSVR.toFixed(0);
+            } else {
+                calcHR = parseFloat(sliders.hr.value);
+                calcSVR = parseFloat(sliders.svr.value);
+            }
+            const finalMap = (calcHR * lvef * edv * calcSVR) + cvp;
+            values.hr.textContent = `${calcHR.toFixed(0)} bpm`;
+            if (compensateCheckbox.checked && calcHR > BASE_HEALTHY_HR) {
+                 values.hr.innerHTML = `${calcHR.toFixed(0)} bpm <span class="compensated-text">(Comp)</span>`;
+            }
+            values.lvef.textContent = `${lvef.toFixed(2)} (${(lvef * 100).toFixed(0)}%)`;
+            let lvefStatusText = "(Good)"; let lvefStatusClass = 'context-good';
+            if (lvef < 0.30) { lvefStatusText = "(Poor)"; lvefStatusClass = 'context-poor'; }
+            else if (lvef < 0.45) { lvefStatusText = "(Moderate)"; lvefStatusClass = 'context-mod'; }
+            values.lvefContext.textContent = lvefStatusText;
+            values.lvefContext.className = 'lvef-context ' + lvefStatusClass;
+            values.edv.textContent = `${edv.toFixed(2)} L (${(edv * 1000).toFixed(0)} mL)`;
+            let edvStatusText = "(Euvolemia)"; let edvStatusClass = 'context-normal';
+            if (edv < 0.08) { edvStatusText = "(Severe Hypovolemia)"; edvStatusClass = 'context-very-low'; }
+            else if (edv < 0.10) { edvStatusText = "(Mild Hypovolemia)"; edvStatusClass = 'context-low'; }
+            else if (edv > 0.15) { edvStatusText = "(Hypervolemia)"; edvStatusClass = 'context-high'; }
+            values.edvContext.textContent = edvStatusText;
+            values.edvContext.className = 'edv-context ' + edvStatusClass;
+            values.svr.textContent = `${calcSVR.toFixed(0)} WU`;
+             if (compensateCheckbox.checked && calcSVR > BASE_HEALTHY_SVR) {
+                 values.svr.innerHTML = `${calcSVR.toFixed(0)} WU <span class="compensated-text">(Comp)</span>`;
+            }
+            let svrStatusText = "(Normal Tone)"; let svrStatusClass = 'context-normal';
+            if (calcSVR < 8) { svrStatusText = "(Vasodilation)"; svrStatusClass = 'context-very-low'; }
+            else if (calcSVR > 15) { svrStatusText = "(Vasoconstriction)"; svrStatusClass = 'context-high'; }
+            values.svrContext.textContent = svrStatusText;
+            values.svrContext.className = 'svr-context ' + svrStatusClass;
+            equationValues.hr.textContent = calcHR.toFixed(0);
+            equationValues.lvef.textContent = lvef.toFixed(2);
+            equationValues.edv.textContent = edv.toFixed(2);
+            equationValues.svr.textContent = calcSVR.toFixed(0);
+            equationValues.cvp.textContent = cvp.toFixed(0);
+            mapValueDisplay.textContent = finalMap.toFixed(0);
+            mapValueDisplay.classList.remove('map-normal', 'map-warning', 'map-danger');
+            if (finalMap < 60) { mapValueDisplay.classList.add('map-danger'); }
+            else if (finalMap < 65) { mapValueDisplay.classList.add('map-warning'); }
+            else { mapValueDisplay.classList.add('map-normal'); }
+            addDataToCharts(calcHR, lvef, edv, calcSVR, finalMap);
+        }
+
+        // --- 5. Preset Function (เหมือนเดิม) ---
+        function setValues(hr, lvef, edv, svr, cvp) {
+            compensateCheckbox.checked = false;
+            toggleCompensationMode(false);
+            
+            sliders.hr.value = hr;
+            sliders.lvef.value = lvef;
+            sliders.edv.value = edv;
+            sliders.svr.value = svr;
+            cvpInput.value = cvp;
+            calculateAndUpdate();
+        }
+
+        // --- 6. Event Listeners (เหมือนเดิม) ---
+        for (let key in sliders) {
+            sliders[key].addEventListener('input', calculateAndUpdate);
+        }
+        cvpInput.addEventListener('input', calculateAndUpdate);
+        
+        compensateCheckbox.addEventListener('change', (e) => {
+            toggleCompensationMode(e.target.checked);
+            calculateAndUpdate();
+        });
+
+        // Preset Listeners (เหมือนเดิม)
+        document.getElementById('btn-normal').addEventListener('click', () => {
+            setValues(70, 0.6, 0.12, 12, 8); // MAP ~68
+        });
+        document.getElementById('btn-hypovolemic').addEventListener('click', () => {
+            setValues(110, 0.55, 0.07, 14, 2); // MAP ~61
+        });
+        document.getElementById('btn-cardiogenic').addEventListener('click', () => {
+            setValues(100, 0.2, 0.16, 15, 15); // MAP ~63
+        });
+        document.getElementById('btn-distributive').addEventListener('click', () => {
+            setValues(130, 0.5, 0.10, 6, 4); // MAP ~43
+        });
+        document.getElementById('btn-obstructive').addEventListener('click', () => {
+            setValues(120, 0.6, 0.04, 15, 18); // MAP ~61
+        });
+        
+        document.getElementById('btn-arrhythmia').addEventListener('click', () => {
+            setValues(180, 0.6, 0.04, 12, 10);
+        });
+
+        // Reset Button Listener
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            resetCharts();
+            document.getElementById('btn-normal').click(); 
+        });
+
+        // --- 7. Initial Load ---
+        initCharts();
+        document.getElementById('btn-normal').click();
+        
+    </script>
+    
+</body>
+</html>
