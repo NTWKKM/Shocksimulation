@@ -30,13 +30,13 @@ export function ControlDock({
   onReset,
 }: ControlDockProps) {
   const toneClass: Record<string, string> = {
-    good: 'text-emerald-700',
-    normal: 'text-emerald-700',
-    moderate: 'text-amber-700',
-    low: 'text-amber-700',
-    poor: 'text-red-700',
-    'very-low': 'text-red-700',
-    high: 'text-violet-700',
+    good: 'text-[#2D6A4F]',
+    normal: 'text-[#2D6A4F]',
+    moderate: 'text-[#A65A17]',
+    low: 'text-[#A65A17]',
+    poor: 'text-[#9E2A2B]',
+    'very-low': 'text-[#9E2A2B]',
+    high: 'text-[#5A3E7A]',
   };
 
   return (
@@ -54,7 +54,7 @@ export function ControlDock({
           type="button"
           onClick={onToggleCollapse}
           aria-expanded={!collapsed}
-          className="pointer-events-auto mb-1.5 inline-flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 transition-colors duration-150 whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+          className="pointer-events-auto mb-1.5 inline-flex items-center gap-1.5 rounded-sm border border-[#B8A68B] bg-[#FBF7EC] px-3 py-1 text-xs font-medium text-[#231A15] shadow-xs hover:bg-[#F3EBD8] transition-colors duration-150 whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#9E2A2B]"
         >
           {collapsed ? (
             <>
@@ -70,202 +70,202 @@ export function ControlDock({
         </button>
 
         {!collapsed && (
-          <div className="pointer-events-auto w-full max-h-[38vh] overflow-y-auto md:max-h-none md:overflow-visible rounded-xl border border-slate-200 bg-white p-3.5 md:p-4 shadow-md">
-          {/* Top row: Presets + Auto-Compensate + Reset */}
-          <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-slate-100">
-            <div className="flex flex-wrap items-center gap-1 p-1 rounded-lg bg-slate-100">
-              {SHOCK_PRESETS.map((preset) => {
-                const isSelected = activePreset === preset.id;
-                return (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    onClick={() => onSelectPreset(preset.id)}
-                    className={`px-2.5 py-1.5 text-xs font-medium rounded-md transition-colors duration-150 whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-blue-600 ${
-                      isSelected
-                        ? 'bg-white text-slate-900 shadow-xs font-semibold'
-                        : 'text-slate-600 hover:text-slate-900'
-                    }`}
+          <div className="pointer-events-auto w-full max-h-[38vh] overflow-y-auto md:max-h-none md:overflow-visible rounded-sm border border-[#B8A68B] bg-[#FBF7EC]/95 p-3.5 md:p-4 shadow-[0_4px_16px_rgba(35,26,21,0.1)]">
+            {/* Top row: Presets + Auto-Compensate + Reset */}
+            <div className="flex flex-wrap items-center justify-between gap-2.5 pb-3 border-b border-[#E3D8C2]">
+              <div className="flex flex-wrap items-center gap-1 p-1 rounded-sm border border-[#DCD0B8] bg-[#EFE6D2]">
+                {SHOCK_PRESETS.map((preset) => {
+                  const isSelected = activePreset === preset.id;
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => onSelectPreset(preset.id)}
+                      className={`px-2.5 py-1.5 text-xs font-medium rounded-xs transition-colors duration-150 whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-[#9E2A2B] ${
+                        isSelected
+                          ? 'bg-[#FBF7EC] text-[#231A15] border border-[#B8A68B] shadow-2xs font-semibold'
+                          : 'text-[#5C4D42] hover:text-[#231A15] border border-transparent'
+                      }`}
+                    >
+                      {preset.shortLabel}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="flex items-center gap-3 shrink-0">
+                <label className="inline-flex items-center gap-2 text-xs font-semibold text-[#231A15] cursor-pointer select-none whitespace-nowrap">
+                  <input
+                    type="checkbox"
+                    checked={inputs.autoCompensate}
+                    onChange={(e) => onChangeInput('autoCompensate', e.target.checked)}
+                    className="h-4 w-4 rounded-xs border-[#B8A68B] accent-[#9E2A2B] focus:ring-[#9E2A2B]"
+                  />
+                  Auto-Compensate
+                </label>
+
+                <button
+                  type="button"
+                  onClick={onReset}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#231A15] border border-[#B8A68B] bg-[#FBF7EC] rounded-sm hover:bg-[#EFE6D2] transition-colors duration-150 whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-[#9E2A2B]"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
+                  Reset
+                </button>
+              </div>
+            </div>
+
+            {/* Bottom row: 5 Physiological Parameter Sliders */}
+            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+              {/* Heart Rate */}
+              <div className="flex flex-col gap-1 min-w-0">
+                <div className="flex items-baseline justify-between gap-2 whitespace-nowrap">
+                  <label
+                    htmlFor="slider-hr"
+                    className={`text-xs font-semibold ${inputs.autoCompensate ? 'text-[#8C7D6F]' : 'text-[#231A15]'}`}
                   >
-                    {preset.shortLabel}
-                  </button>
-                );
-              })}
-            </div>
-
-            <div className="flex items-center gap-3 shrink-0">
-              <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-800 cursor-pointer select-none whitespace-nowrap">
+                    HR <span className="font-normal text-[#7C6D60]">(60–100)</span>
+                  </label>
+                  <span className="font-mono-tabular text-xs font-semibold text-[#231A15]">
+                    {telemetry.effectiveHr.toFixed(0)} bpm
+                  </span>
+                </div>
                 <input
-                  type="checkbox"
-                  checked={inputs.autoCompensate}
-                  onChange={(e) => onChangeInput('autoCompensate', e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600"
-                />
-                Auto-Compensate
-              </label>
-
-              <button
-                type="button"
-                onClick={onReset}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 border border-slate-200 rounded-md hover:bg-slate-50 transition-colors duration-150 whitespace-nowrap shrink-0 focus-visible:outline-2 focus-visible:outline-blue-600"
-              >
-                <RotateCcw className="w-3.5 h-3.5" aria-hidden="true" />
-                Reset
-              </button>
-            </div>
-          </div>
-
-          {/* Bottom row: 5 Physiological Parameter Sliders */}
-          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
-            {/* Heart Rate */}
-            <div className="flex flex-col gap-1 min-w-0">
-              <div className="flex items-baseline justify-between gap-2 whitespace-nowrap">
-                <label
-                  htmlFor="slider-hr"
-                  className={`text-xs font-semibold ${inputs.autoCompensate ? 'text-slate-400' : 'text-slate-800'}`}
-                >
-                  HR <span className="font-normal text-slate-400">(60–100)</span>
-                </label>
-                <span className="font-mono-tabular text-xs font-semibold text-slate-900">
-                  {telemetry.effectiveHr.toFixed(0)} bpm
-                </span>
-              </div>
-              <input
-                id="slider-hr"
-                type="range"
-                min={30}
-                max={220}
-                step={1}
-                disabled={inputs.autoCompensate}
-                value={Math.round(telemetry.effectiveHr)}
-                onChange={(e) => onChangeInput('hr', Number(e.target.value))}
-                className="clinical-slider"
-              />
-              <div className="text-[11px] text-slate-500 truncate">
-                {inputs.autoCompensate ? 'Baroreceptor Driven' : 'Chronotropy'}
-              </div>
-            </div>
-
-            {/* LVEF */}
-            <div className="flex flex-col gap-1 min-w-0">
-              <div className="flex items-baseline justify-between gap-2 whitespace-nowrap">
-                <label htmlFor="slider-lvef" className="text-xs font-semibold text-slate-800">
-                  LVEF <span className="font-normal text-slate-400">(55–70%)</span>
-                </label>
-                <span className="font-mono-tabular text-xs font-semibold text-slate-900">
-                  {inputs.lvef.toFixed(2)} ({Math.round(inputs.lvef * 100)}%)
-                </span>
-              </div>
-              <input
-                id="slider-lvef"
-                type="range"
-                min={0.1}
-                max={0.8}
-                step={0.01}
-                value={inputs.lvef}
-                onChange={(e) => onChangeInput('lvef', Number(e.target.value))}
-                className="clinical-slider"
-              />
-              <div className={`text-[11px] font-medium truncate ${toneClass[telemetry.lvefContext.tone]}`}>
-                {telemetry.lvefContext.text}
-              </div>
-            </div>
-
-            {/* EDV */}
-            <div className="flex flex-col gap-1 min-w-0">
-              <div className="flex items-baseline justify-between gap-2 whitespace-nowrap">
-                <label htmlFor="slider-edv" className="text-xs font-semibold text-slate-800">
-                  EDV <span className="font-normal text-slate-400">(100–150)</span>
-                </label>
-                <span className="font-mono-tabular text-xs font-semibold text-slate-900">
-                  {inputs.edv.toFixed(2)} L · {Math.round(inputs.edv * 1000)}
-                </span>
-              </div>
-              <input
-                id="slider-edv"
-                type="range"
-                min={0.04}
-                max={0.18}
-                step={0.01}
-                value={inputs.edv}
-                onChange={(e) => onChangeInput('edv', Number(e.target.value))}
-                className="clinical-slider"
-              />
-              <div className={`text-[11px] font-medium truncate ${toneClass[telemetry.edvContext.tone]}`}>
-                {telemetry.edvContext.text}
-              </div>
-            </div>
-
-            {/* SVR */}
-            <div className="flex flex-col gap-1 min-w-0">
-              <div className="flex items-baseline justify-between gap-2 whitespace-nowrap">
-                <label
-                  htmlFor="slider-svr"
-                  className={`text-xs font-semibold ${inputs.autoCompensate ? 'text-slate-400' : 'text-slate-800'}`}
-                >
-                  SVR <span className="font-normal text-slate-400">(8–15)</span>
-                </label>
-                <span className="font-mono-tabular text-xs font-semibold text-slate-900">
-                  {telemetry.effectiveSvr.toFixed(0)} WU
-                </span>
-              </div>
-              <input
-                id="slider-svr"
-                type="range"
-                min={5}
-                max={30}
-                step={1}
-                disabled={inputs.autoCompensate}
-                value={Math.round(telemetry.effectiveSvr)}
-                onChange={(e) => onChangeInput('svr', Number(e.target.value))}
-                className="clinical-slider"
-              />
-              <div className={`text-[11px] font-medium truncate ${toneClass[telemetry.svrContext.tone]}`}>
-                {telemetry.svrContext.text}
-              </div>
-            </div>
-
-            {/* CVP */}
-            <div className="flex flex-col gap-1 min-w-0">
-              <div className="flex items-baseline justify-between gap-2 whitespace-nowrap">
-                <label htmlFor="input-cvp" className="text-xs font-semibold text-slate-800">
-                  CVP <span className="font-normal text-slate-400">(2–8)</span>
-                </label>
-                <span className="font-mono-tabular text-xs font-semibold text-slate-900">
-                  {inputs.cvp} mmHg
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <input
-                  id="input-cvp"
+                  id="slider-hr"
                   type="range"
-                  min={0}
-                  max={30}
+                  min={30}
+                  max={220}
                   step={1}
-                  value={inputs.cvp}
-                  onChange={(e) => onChangeInput('cvp', Number(e.target.value))}
+                  disabled={inputs.autoCompensate}
+                  value={Math.round(telemetry.effectiveHr)}
+                  onChange={(e) => onChangeInput('hr', Number(e.target.value))}
                   className="clinical-slider"
                 />
+                <div className="text-[11px] text-[#5C4D42] truncate">
+                  {inputs.autoCompensate ? 'Baroreceptor Driven' : 'Chronotropy'}
+                </div>
+              </div>
+
+              {/* LVEF */}
+              <div className="flex flex-col gap-1 min-w-0">
+                <div className="flex items-baseline justify-between gap-2 whitespace-nowrap">
+                  <label htmlFor="slider-lvef" className="text-xs font-semibold text-[#231A15]">
+                    LVEF <span className="font-normal text-[#7C6D60]">(55–70%)</span>
+                  </label>
+                  <span className="font-mono-tabular text-xs font-semibold text-[#231A15]">
+                    {inputs.lvef.toFixed(2)} ({Math.round(inputs.lvef * 100)}%)
+                  </span>
+                </div>
                 <input
-                  aria-label="CVP numeric value"
-                  type="number"
-                  min={0}
+                  id="slider-lvef"
+                  type="range"
+                  min={0.1}
+                  max={0.8}
+                  step={0.01}
+                  value={inputs.lvef}
+                  onChange={(e) => onChangeInput('lvef', Number(e.target.value))}
+                  className="clinical-slider"
+                />
+                <div className={`text-[11px] font-medium truncate ${toneClass[telemetry.lvefContext.tone]}`}>
+                  {telemetry.lvefContext.text}
+                </div>
+              </div>
+
+              {/* EDV */}
+              <div className="flex flex-col gap-1 min-w-0">
+                <div className="flex items-baseline justify-between gap-2 whitespace-nowrap">
+                  <label htmlFor="slider-edv" className="text-xs font-semibold text-[#231A15]">
+                    EDV <span className="font-normal text-[#7C6D60]">(100–150)</span>
+                  </label>
+                  <span className="font-mono-tabular text-xs font-semibold text-[#231A15]">
+                    {inputs.edv.toFixed(2)} L · {Math.round(inputs.edv * 1000)}
+                  </span>
+                </div>
+                <input
+                  id="slider-edv"
+                  type="range"
+                  min={0.04}
+                  max={0.18}
+                  step={0.01}
+                  value={inputs.edv}
+                  onChange={(e) => onChangeInput('edv', Number(e.target.value))}
+                  className="clinical-slider"
+                />
+                <div className={`text-[11px] font-medium truncate ${toneClass[telemetry.edvContext.tone]}`}>
+                  {telemetry.edvContext.text}
+                </div>
+              </div>
+
+              {/* SVR */}
+              <div className="flex flex-col gap-1 min-w-0">
+                <div className="flex items-baseline justify-between gap-2 whitespace-nowrap">
+                  <label
+                    htmlFor="slider-svr"
+                    className={`text-xs font-semibold ${inputs.autoCompensate ? 'text-[#8C7D6F]' : 'text-[#231A15]'}`}
+                  >
+                    SVR <span className="font-normal text-[#7C6D60]">(8–15)</span>
+                  </label>
+                  <span className="font-mono-tabular text-xs font-semibold text-[#231A15]">
+                    {telemetry.effectiveSvr.toFixed(0)} WU
+                  </span>
+                </div>
+                <input
+                  id="slider-svr"
+                  type="range"
+                  min={5}
                   max={30}
                   step={1}
-                  value={inputs.cvp}
-                  onChange={(e) => {
-                    const parsed = Number(e.target.value);
-                    onChangeInput('cvp', Number.isNaN(parsed) ? 0 : Math.max(0, Math.min(30, parsed)));
-                  }}
-                  className="w-11 shrink-0 rounded border border-slate-200 px-1 py-0.5 text-center font-mono-tabular text-xs text-slate-900 focus:border-blue-600 focus:outline-none"
+                  disabled={inputs.autoCompensate}
+                  value={Math.round(telemetry.effectiveSvr)}
+                  onChange={(e) => onChangeInput('svr', Number(e.target.value))}
+                  className="clinical-slider"
                 />
+                <div className={`text-[11px] font-medium truncate ${toneClass[telemetry.svrContext.tone]}`}>
+                  {telemetry.svrContext.text}
+                </div>
               </div>
-              <div className="text-[11px] text-slate-500 truncate">
-                {inputs.cvp > 12 ? 'Venous Congestion' : inputs.cvp < 2 ? 'Low Filling Pressure' : 'Normal Venous Tone'}
+
+              {/* CVP */}
+              <div className="flex flex-col gap-1 min-w-0">
+                <div className="flex items-baseline justify-between gap-2 whitespace-nowrap">
+                  <label htmlFor="input-cvp" className="text-xs font-semibold text-[#231A15]">
+                    CVP <span className="font-normal text-[#7C6D60]">(2–8)</span>
+                  </label>
+                  <span className="font-mono-tabular text-xs font-semibold text-[#231A15]">
+                    {inputs.cvp} mmHg
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    id="input-cvp"
+                    type="range"
+                    min={0}
+                    max={30}
+                    step={1}
+                    value={inputs.cvp}
+                    onChange={(e) => onChangeInput('cvp', Number(e.target.value))}
+                    className="clinical-slider"
+                  />
+                  <input
+                    aria-label="CVP numeric value"
+                    type="number"
+                    min={0}
+                    max={30}
+                    step={1}
+                    value={inputs.cvp}
+                    onChange={(e) => {
+                      const parsed = Number(e.target.value);
+                      onChangeInput('cvp', Number.isNaN(parsed) ? 0 : Math.max(0, Math.min(30, parsed)));
+                    }}
+                    className="w-11 shrink-0 rounded-xs border border-[#B8A68B] bg-[#FBF7EC] px-1 py-0.5 text-center font-mono-tabular text-xs text-[#231A15] focus:border-[#9E2A2B] focus:outline-none"
+                  />
+                </div>
+                <div className="text-[11px] text-[#5C4D42] truncate">
+                  {inputs.cvp > 12 ? 'Venous Congestion' : inputs.cvp < 2 ? 'Low Filling Pressure' : 'Normal Venous Tone'}
+                </div>
               </div>
             </div>
           </div>
-        </div>
         )}
       </div>
     </section>

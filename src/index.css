@@ -2,8 +2,14 @@
 
 @layer base {
   :root {
+    --font-serif: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
     --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+    --atlas-paper: #f6efe0;
+    --atlas-card: #fbf7ec;
+    --atlas-ink: #231a15;
+    --atlas-ink-muted: #5c4d42;
+    --atlas-rule: #cbbba2;
   }
 
   html,
@@ -11,9 +17,13 @@
   #root {
     height: 100%;
     font-family: var(--font-sans);
-    background-color: #f4f6f9;
-    color: #0f172a;
+    background-color: var(--atlas-paper);
+    color: var(--atlas-ink);
   }
+}
+
+.font-atlas-serif {
+  font-family: var(--font-serif);
 }
 
 .font-mono-tabular {
@@ -21,14 +31,14 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Precision instrument range slider */
+/* Precision ink-and-brass range slider */
 input[type='range'].clinical-slider {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
   height: 4px;
   border-radius: 9999px;
-  background: #e2e8f0;
+  background: #d8ccb4;
   outline: none;
   cursor: pointer;
 }
@@ -36,12 +46,12 @@ input[type='range'].clinical-slider {
 input[type='range'].clinical-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   border-radius: 9999px;
-  background: #0f62fe;
-  border: 2px solid #ffffff;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
+  background: #9e2a2b;
+  border: 2px solid #fbf7ec;
+  box-shadow: 0 1px 2px rgba(35, 26, 21, 0.35);
   transition: transform 120ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -55,15 +65,15 @@ input[type='range'].clinical-slider:disabled {
 }
 
 input[type='range'].clinical-slider:disabled::-webkit-slider-thumb {
-  background: #64748b;
+  background: #7c6d60;
 }
 
 input[type='range'].clinical-slider::-moz-range-thumb {
-  width: 16px;
-  height: 16px;
+  width: 15px;
+  height: 15px;
   border-radius: 9999px;
-  background: #0f62fe;
-  border: 2px solid #ffffff;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.25);
+  background: #9e2a2b;
+  border: 2px solid #fbf7ec;
+  box-shadow: 0 1px 2px rgba(35, 26, 21, 0.35);
   cursor: pointer;
 }

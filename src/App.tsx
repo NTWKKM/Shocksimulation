@@ -69,7 +69,7 @@ export default function App() {
     const nextTelemetry = getTelemetry(integrator, currentInputs);
 
     const now = performance.now();
-    if (now - lastHudSyncRef.current >= 50) {
+    if (now - lastHudSyncRef.current >= 100) {
       lastHudSyncRef.current = now;
       const buf = waveformBufferRef.current;
       buf.push({
@@ -167,7 +167,7 @@ export default function App() {
 
   return (
     <div
-      className="relative flex h-screen w-screen flex-col overflow-hidden bg-[#F4F6F9] text-slate-900"
+      className="relative flex h-screen w-screen flex-col overflow-hidden bg-[#F6EFE0] text-[#231A15]"
       data-status={telemetry.status}
     >
       <TopBar
@@ -176,7 +176,7 @@ export default function App() {
         onOpenReference={() => setDrawerOpen((prev) => !prev)}
       />
 
-      {/* Main 2.5D Clinical Anatomy Stage + Side Reference Drawer */}
+      {/* Main 2D Netter Anatomical Plate Stage + Side Reference Drawer */}
       <div className="relative flex flex-1 overflow-hidden">
         <main className="relative flex-1 overflow-hidden">
         <div data-testid="cardio-25d-stage" className="absolute inset-0 h-full w-full">
@@ -197,24 +197,24 @@ export default function App() {
 
             {/* Contextual Anatomical Callout */}
             {activeCallout && !drawerOpen && (
-              <div className="pointer-events-auto hidden sm:block w-[290px] rounded-lg border border-slate-200 bg-white/95 p-3.5 shadow-sm">
-                <div className="text-[11px] font-semibold text-blue-700">
+              <div className="pointer-events-auto hidden sm:block w-[290px] rounded-sm border border-[#B8A68B] bg-[#FBF7EC]/95 p-3.5 shadow-[0_2px_10px_rgba(35,26,21,0.08)]">
+                <div className="text-[11px] font-semibold text-[#9E2A2B]">
                   {activeCallout.parameterTag}
                 </div>
-                <div className="mt-0.5 text-sm font-bold text-slate-900">
+                <div className="font-atlas-serif mt-0.5 text-lg font-bold text-[#231A15] leading-snug">
                   {activeCallout.titleEn}
                 </div>
-                <p className="mt-1 text-xs text-slate-600 line-clamp-3">
+                <p className="mt-1 text-xs text-[#5C4D42] line-clamp-3">
                   {activeCallout.summaryTh}
                 </p>
-                <div className="mt-2.5 flex items-center justify-between pt-2 border-t border-slate-100">
-                  <span className="font-mono-tabular text-[11px] text-slate-500">
+                <div className="mt-2.5 flex items-center justify-between pt-2 border-t border-[#E3D8C2]">
+                  <span className="font-mono-tabular text-[11px] text-[#7C6D60]">
                     {activeCallout.normalRange}
                   </span>
                   <button
                     type="button"
                     onClick={() => setDrawerOpen(true)}
-                    className="text-xs font-semibold text-blue-700 hover:underline whitespace-nowrap"
+                    className="text-xs font-semibold text-[#9E2A2B] hover:underline whitespace-nowrap"
                   >
                     Read Details
                   </button>

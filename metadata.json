@@ -1,6 +1,8 @@
 {
-  "name": "ShockLab 3D",
+  "name": "Shocksimulation",
   "description": "Interactive 3D physiological shock and Windkessel hemodynamic simulator with procedural anatomical cutaway and real-time ODE physics.",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
