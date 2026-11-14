@@ -167,7 +167,7 @@ export default function App() {
 
   return (
     <div
-      className="iso relative flex h-screen w-screen flex-col overflow-hidden"
+      className="iso relative min-h-screen w-full"
       data-theme={theme}
       data-status={telemetry.status}
     >
@@ -177,81 +177,72 @@ export default function App() {
         onOpenReference={() => setDrawerOpen((prev) => !prev)}
       />
 
-      {/* Main Isometric Plate Workspace + Side Reference Drawer */}
-      <div className="relative flex flex-1 min-h-0 overflow-hidden">
-        <div className="flex flex-1 flex-col min-w-0 min-h-0 overflow-hidden">
-          <main className="flex flex-1 flex-col lg:flex-row gap-3.5 p-3.5 md:p-4 min-h-0 overflow-y-auto lg:overflow-hidden">
-            {/* Left Rail Telemetry & Active Focus Summary */}
-            <div className="w-full lg:w-[308px] shrink-0 flex flex-col gap-3 lg:overflow-y-auto">
-              <TelemetryHud telemetry={telemetry} inputs={inputs} waveform={waveform} />
+      {/* Centered Verbatim Editorial Plate Column */}
+      <main className="mx-auto w-full max-w-[1060px] px-4 sm:px-6 py-4 space-y-3.5">
+        <TelemetryHud telemetry={telemetry} inputs={inputs} waveform={waveform} />
 
-              {activeCallout && !drawerOpen && (
-                <div className="border border-[var(--anatomy-rule)] bg-[var(--anatomy-card)] p-3.5">
-                  <div className="font-mono-tabular text-[10.5px] font-semibold text-[var(--anatomy-red)]">
-                    {activeCallout.parameterTag}
-                  </div>
-                  <div className="mt-0.5 text-base font-bold text-[var(--anatomy-strong)] leading-snug">
-                    {activeCallout.titleEn}
-                  </div>
-                  <p className="mt-1 text-xs text-[var(--anatomy-text)] line-clamp-3">
-                    {activeCallout.summaryTh}
-                  </p>
-                  <div className="mt-2.5 flex items-center justify-between pt-2 border-t border-[var(--anatomy-rule-soft)]">
-                    <span className="font-mono-tabular text-[11px] text-[var(--anatomy-muted)]">
-                      {activeCallout.normalRange}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setDrawerOpen(true)}
-                      className="font-mono-tabular text-[11px] font-semibold text-[var(--anatomy-strong)] hover:underline whitespace-nowrap"
-                    >
-                      Read Details
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Primary Fixed-Angle Isometric Rig Plate */}
-            <div className="flex-1 min-w-0 min-h-[300px] sm:min-h-[360px] lg:min-h-0 flex">
-              <IsometricRigStage
-                selectedPart={selectedPart}
-                hoveredPart={hoveredPart}
-                theme={theme}
-                inputs={inputs}
-                onSelectPart={handleSelectAnatomy}
-                onHoverPart={setHoveredPart}
-                onStepPhysics={handleStepPhysics}
-              />
-            </div>
-          </main>
-
-          {/* Bottom Hemodynamic Control Dock */}
-          <ControlDock
-            inputs={inputs}
-            telemetry={telemetry}
-            activePreset={activePreset}
-            collapsed={dockCollapsed}
-            theme={theme}
-            onToggleCollapse={() => setDockCollapsed((prev) => !prev)}
-            onToggleTheme={() => setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))}
-            onSelectPreset={handleSelectPreset}
-            onChangeInput={handleChangeInput}
-            onReset={handleReset}
-          />
-        </div>
-
-        {/* Slide-over Clinical Reference Drawer */}
-        <ReferenceDrawer
-          open={drawerOpen}
+        <IsometricRigStage
           selectedPart={selectedPart}
-          activePreset={activePreset}
-          onClose={() => setDrawerOpen(false)}
+          hoveredPart={hoveredPart}
+          theme={theme}
+          inputs={inputs}
           onSelectPart={handleSelectAnatomy}
-          onSelectPreset={handleSelectPreset}
-          onResetCamera={handleResetCamera}
+          onHoverPart={setHoveredPart}
+          onStepPhysics={handleStepPhysics}
         />
-      </div>
+
+        {activeCallout && !drawerOpen && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-[var(--anatomy-rule)] bg-[var(--anatomy-card)] px-4 py-2.5">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-baseline gap-2">
+                <span className="font-mono-tabular text-[11px] font-semibold text-[var(--anatomy-red)]">
+                  {activeCallout.parameterTag}
+                </span>
+                <span className="text-sm font-bold text-[var(--anatomy-strong)]">
+                  {activeCallout.titleEn}
+                </span>
+                <span className="font-mono-tabular text-[11px] text-[var(--anatomy-muted)]">
+                  · Normal {activeCallout.normalRange}
+                </span>
+              </div>
+              <p className="mt-0.5 text-xs text-[var(--anatomy-text)] truncate">
+                {activeCallout.summaryTh}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDrawerOpen(true)}
+              className="self-start sm:self-center px-3 py-1 font-mono-tabular text-[11px] font-semibold border border-[var(--anatomy-rule)] bg-[var(--anatomy-surface-alt)] text-[var(--anatomy-strong)] hover:border-[var(--anatomy-lit)] transition-colors whitespace-nowrap shrink-0"
+            >
+              Read Details
+            </button>
+          </div>
+        )}
+
+        <ControlDock
+          inputs={inputs}
+          telemetry={telemetry}
+          activePreset={activePreset}
+          collapsed={dockCollapsed}
+          theme={theme}
+          onToggleCollapse={() => setDockCollapsed((prev) => !prev)}
+          onToggleTheme={() => setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))}
+          onSelectPreset={handleSelectPreset}
+          onChangeInput={handleChangeInput}
+          onReset={handleReset}
+        />
+      </main>
+
+      {/* Slide-over Clinical Reference Drawer */}
+      <ReferenceDrawer
+        open={drawerOpen}
+        selectedPart={selectedPart}
+        activePreset={activePreset}
+        onClose={() => setDrawerOpen(false)}
+        onSelectPart={handleSelectAnatomy}
+        onSelectPreset={handleSelectPreset}
+        onResetCamera={handleResetCamera}
+      />
     </div>
   );
 }

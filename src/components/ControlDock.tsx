@@ -44,7 +44,7 @@ export function ControlDock({
   return (
     <section
       aria-label="Hemodynamic controls dock"
-      className="relative z-20 border-t border-[var(--anatomy-rule)] bg-[var(--anatomy-card)] px-4 py-2.5 md:px-5"
+      className="relative z-10 border border-[var(--anatomy-rule)] bg-[var(--anatomy-card)] px-4 py-3 md:px-5"
     >
       {/* Dock Header Bar: Collapse Tab + Presets + Theme Toggle + Auto-Compensate + Reset */}
       <div className="flex flex-wrap items-center justify-between gap-2.5">
@@ -169,12 +169,12 @@ export function ControlDock({
 
           {/* LVEF */}
           <div className="flex flex-col gap-1 min-w-0">
-            <div className="flex items-baseline justify-between gap-2 whitespace-nowrap">
-              <label htmlFor="slider-lvef" className="text-xs font-semibold text-[var(--anatomy-strong)]">
+            <div className="flex items-baseline justify-between gap-1.5 min-w-0">
+              <label htmlFor="slider-lvef" className="text-xs font-semibold text-[var(--anatomy-strong)] truncate">
                 LVEF <span className="font-normal text-[var(--anatomy-muted)]">(55–70%)</span>
               </label>
-              <span className="font-mono-tabular text-xs font-semibold text-[var(--anatomy-strong)]">
-                {inputs.lvef.toFixed(2)} ({Math.round(inputs.lvef * 100)}%)
+              <span className="font-mono-tabular text-xs font-semibold text-[var(--anatomy-strong)] shrink-0">
+                {Math.round(inputs.lvef * 100)}%
               </span>
             </div>
             <input
@@ -194,12 +194,12 @@ export function ControlDock({
 
           {/* EDV */}
           <div className="flex flex-col gap-1 min-w-0">
-            <div className="flex items-baseline justify-between gap-2 whitespace-nowrap">
-              <label htmlFor="slider-edv" className="text-xs font-semibold text-[var(--anatomy-strong)]">
+            <div className="flex items-baseline justify-between gap-1.5 min-w-0">
+              <label htmlFor="slider-edv" className="text-xs font-semibold text-[var(--anatomy-strong)] truncate">
                 EDV <span className="font-normal text-[var(--anatomy-muted)]">(100–150)</span>
               </label>
-              <span className="font-mono-tabular text-xs font-semibold text-[var(--anatomy-strong)]">
-                {inputs.edv.toFixed(2)} L · {Math.round(inputs.edv * 1000)}
+              <span className="font-mono-tabular text-xs font-semibold text-[var(--anatomy-strong)] shrink-0">
+                {Math.round(inputs.edv * 1000)} mL
               </span>
             </div>
             <input

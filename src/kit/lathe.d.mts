@@ -1,4 +1,4 @@
-import type { Flat, Plane, Point3, Projection, SolidPaths } from './iso-kit';
+import type { Flat, Point3, Projection, SolidPaths } from './iso-kit';
 
 export interface Frame {
   o: Point3;
@@ -17,6 +17,8 @@ export interface SmoothOptions {
 
 export interface LatheOptions {
   steps?: number;
+  bevel?: number;
+  rims?: 'all' | 'ends' | 'none';
   smooth?: boolean | 'auto' | SmoothOptions;
   fill?: 'auto' | 'hull' | 'surface';
 }
@@ -35,6 +37,7 @@ export function lightOf(P: Projection): Point3;
 export function scaleOf(P: Projection): number;
 export function bandOf(score: number): number;
 export function toneOf(normal: Point3, P: Projection): number;
+export function stepsFor(radius: number, least?: number, most?: number, scale?: number): number;
 
 export function frameAlong(o: Point3, a: Point3): Frame;
 export function frameOf(o: Point3, a: Point3, u: Point3, v: Point3): Frame;
@@ -44,9 +47,33 @@ export function tangentOf(F: Frame, angle: number): Point3;
 export function angleToward(F: Frame, direction: Point3): number;
 
 export function solidOf(profile: MeridianPoint[], F: Frame, P: Projection, options?: LatheOptions): SolidPaths;
-export function disc(s0: number, s1: number, r: number, F: Frame, P: Projection, steps?: number): SolidPaths;
-export function ringBand(F: Frame, s0: number, s1: number, rIn: number, rOut: number, P: Projection, steps?: number): SolidPaths;
-export function sphereOf(center: Point3, r: number, P: Projection, steps?: number): SolidPaths;
+export function lathe(meridian: MeridianPoint[], F: Frame, P: Projection, options?: LatheOptions): SolidPaths;
+export function disc(
+  s0: number,
+  s1: number,
+  r: number,
+  F: Frame,
+  P: Projection,
+  options?: number | { steps?: number; bevel?: number },
+): SolidPaths;
+export function ringBand(
+  s0: number,
+  s1: number,
+  rIn: number,
+  rOut: number,
+  F: Frame,
+  P: Projection,
+  options?: number | { steps?: number },
+): SolidPaths;
+export function sphereOf(center: Point3, r: number, P: Projection, options?: { steps?: number }): SolidPaths;
+export function saddleOf(
+  F: Frame,
+  a: number,
+  start: (angle: number) => number,
+  s1: number,
+  P: Projection,
+  options?: { steps?: number },
+): SolidPaths;
 export function arcOf(
   F: Frame,
   s: number,
@@ -67,11 +94,10 @@ export function ribsOf(
   F: Frame,
   s0: number,
   s1: number,
-  r0: number,
-  r1: number,
+  r: number,
   count: number,
   P: Projection,
-  options?: { phase?: number; fade?: [number, number]; seams?: boolean; radius?: (s: number) => number },
+  options?: { phase?: number; twist?: number; least?: number; r1?: number; fade?: [number, number]; seams?: boolean },
 ): Array<{ d: string; alpha: number }>;
 export function spokesOf(
   F: Frame,
@@ -87,10 +113,9 @@ export function rodOut(
   from: number,
   to: number,
   r: number,
-  stroke: number,
   P: Projection,
-  steps?: number,
-): { paths: SolidPaths; clip: string; from: number; to: number; stroke: number; reach: number };
+  options?: { stroke?: number; steps?: number },
+): { paths: SolidPaths; clip: string };
 
 export function fillet(
   points: Point3[],

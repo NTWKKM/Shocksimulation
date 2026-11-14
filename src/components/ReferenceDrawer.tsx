@@ -33,7 +33,7 @@ export function ReferenceDrawer({
   return (
     <aside
       aria-label="Clinical reference drawer"
-      className="pointer-events-auto fixed top-[45px] right-0 bottom-0 z-30 w-full max-w-[420px] lg:static lg:h-full lg:w-[410px] lg:shrink-0 border-l border-[var(--anatomy-rule)] bg-[var(--anatomy-card)] flex flex-col"
+      className="pointer-events-auto fixed top-[45px] right-0 bottom-0 z-30 w-full max-w-[420px] shadow-[-8px_0_24px_rgba(0,0,0,0.08)] border-l border-[var(--anatomy-rule)] bg-[var(--anatomy-card)] flex flex-col"
     >
       {/* Drawer Header */}
       <div className="flex items-center justify-between gap-4 border-b border-[var(--anatomy-rule-soft)] px-5 py-3.5">

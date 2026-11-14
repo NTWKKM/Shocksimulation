@@ -8,6 +8,34 @@ const ART_FEED_PTS = 8;
 const VEN_PTS = 32;
 const CAP_SEG = 4;
 
+interface RouteProjectionData {
+  artArchPts: Float32Array;
+  artFeedPts: Float32Array;
+  venPts: Float32Array;
+  capPts: Float32Array;
+  archBox: [number, number, number, number];
+  feedBox: [number, number, number, number];
+  capBox: [number, number, number, number];
+  venBox: [number, number, number, number];
+}
+
+function boxOfFlatArray(pts: Float32Array, pad: number): [number, number, number, number] {
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (let i = 0; i < pts.length; i += 3) {
+    const x = pts[i]!;
+    const y = pts[i + 1]!;
+    if (x < minX) minX = x;
+    if (y < minY) minY = y;
+    if (x > maxX) maxX = x;
+    if (y > maxY) maxY = y;
+  }
+  if (!Number.isFinite(minX)) return [0, 0, 0, 0];
+  return [minX - pad, minY - pad, maxX + pad, maxY + pad];
+}
+
 function samplePolylineProjected(
   pts3: k.Point3[],
   count: number,
@@ -45,6 +73,35 @@ function samplePolylineProjected(
   return out;
 }
 
+function projectRoutesForScene(scene: RigStaticScene): RouteProjectionData {
+  const artArchPts = samplePolylineProjected(scene.arterialArchGlRoute, ART_ARCH_PTS, scene.projection);
+  const artFeedPts = samplePolylineProjected(scene.arterialFeedGlRoute, ART_FEED_PTS, scene.projection);
+  const venPts = samplePolylineProjected(scene.venousRoute, VEN_PTS, scene.projection);
+  const capPts = new Float32Array(CAP_SEG * 2 * 3);
+  for (let i = 0; i < CAP_SEG; i++) {
+    const r = scene.capillaryRoutes[i];
+    if (!r || r.length < 2) continue;
+    const p0 = k.iso(r[0]!, scene.projection);
+    const p1 = k.iso(r[r.length - 1]!, scene.projection);
+    capPts[i * 6 + 0] = p0[0];
+    capPts[i * 6 + 1] = p0[1];
+    capPts[i * 6 + 2] = 0;
+    capPts[i * 6 + 3] = p1[0];
+    capPts[i * 6 + 4] = p1[1];
+    capPts[i * 6 + 5] = 1;
+  }
+  return {
+    artArchPts,
+    artFeedPts,
+    venPts,
+    capPts,
+    archBox: boxOfFlatArray(artArchPts, 8),
+    feedBox: boxOfFlatArray(artFeedPts, 8),
+    capBox: boxOfFlatArray(capPts, 8),
+    venBox: boxOfFlatArray(venPts, 8),
+  };
+}
+
 const FRAGMENT_SHADER = `
 uniform vec4 uViewBox;
 uniform float uLight;
@@ -61,6 +118,10 @@ uniform vec3 uHeart;
 uniform vec4 uDome;
 uniform vec4 uCvp;
 uniform vec4 uTray;
+uniform vec4 uArchBox;
+uniform vec4 uFeedBox;
+uniform vec4 uCapBox;
+uniform vec4 uVenBox;
 uniform vec3 uArtArchPts[${ART_ARCH_PTS}];
 uniform vec3 uArtFeedPts[${ART_FEED_PTS}];
 uniform vec3 uVenPts[${VEN_PTS}];
@@ -186,18 +247,15 @@ void main() {
   vec3 perfWarm = uLight > 0.5 ? vec3(0.76, 0.26, 0.28) : vec3(0.92, 0.34, 0.32);
   vec3 perfPale = uLight > 0.5 ? vec3(0.26, 0.42, 0.72) : vec3(0.32, 0.52, 0.86);
 
-  // 1. Cutaway Left Ventricle Cavity Blood Glow (clipped strictly inside cutaway arc -38..+88 deg)
+  // 1. 360° Sight-Glass Pump Chamber Blood Column (visible from all azimuths below piston head)
   float radialLv = 1.0;
   float menLv = 0.0;
-  float lvTop = mix(42.0, 82.0, clamp(uLvFrac, 0.0, 1.0));
-  float lvRad = mix(10.5, 20.0, clamp(uLvFrac, 0.0, 1.0));
-  vec2 lvMask = cylColumnMask(vb, uHeart.xy, lvRad, 23.0, lvTop, radialLv, menLv);
+  float zPistonBot = 32.0 + clamp(uLvFrac, 0.14, 0.92) * 27.0;
+  vec2 lvMask = cylColumnMask(vb, uHeart.xy, 17.4, 29.5, zPistonBot, radialLv, menLv);
   if (lvMask.x > 0.0) {
-    vec3 lvHit = onFloor(vb, lvTop);
-    float cutSector = smoothstep(-2.0, 6.0, lvHit.y - uHeart.y + 3.0);
     float beatCore = 0.28 + 0.72 * uEjection;
-    float lvDens = lvMask.x * cutSector * (0.48 + 0.45 * lvMask.y + 0.42 * beatCore);
-    float coreW = (1.0 - radialLv * radialLv) * (0.35 + 0.55 * uEjection) + menLv * 0.5;
+    float lvDens = lvMask.x * (0.50 + 0.44 * lvMask.y + 0.36 * beatCore);
+    float coreW = (1.0 - radialLv * radialLv) * (0.35 + 0.55 * uEjection) + menLv * 0.45;
     vec4 lvCol = uLight > 0.5
       ? shadeLightInk(artBody, artCore, lvDens, coreW)
       : shadeDarkGlow(artBody, artCore, lvDens * 0.92, coreW);
@@ -254,8 +312,8 @@ void main() {
     outCol = over(trayCol, outCol);
   }
 
-  // 5a. Arterial Arch Wavefront (confined strictly inside r=7.0 tube wall)
-  if (vb.x > 255.0 && vb.x < 405.0 && vb.y > 42.0 && vb.y < 145.0) {
+  // 5a. Arterial Arch Wavefront (dynamic rotated screen-space bbox)
+  if (vb.x > uArchBox.x && vb.x < uArchBox.z && vb.y > uArchBox.y && vb.y < uArchBox.w) {
     vec2 arch = traceArch(vb);
     float halfW = 3.2;
     if (arch.x < halfW) {
@@ -271,8 +329,8 @@ void main() {
     }
   }
 
-  // 5b. Arterial Feed Pipe into SVR Manifold (confined strictly inside r=5.2 wall)
-  if (vb.x > 375.0 && vb.x < 492.0 && vb.y > 195.0 && vb.y < 292.0) {
+  // 5b. Arterial Feed Pipe into SVR Manifold
+  if (vb.x > uFeedBox.x && vb.x < uFeedBox.z && vb.y > uFeedBox.y && vb.y < uFeedBox.w) {
     vec2 feed = traceFeed(vb);
     float halfW = 2.4;
     if (feed.x < halfW) {
@@ -289,7 +347,7 @@ void main() {
   }
 
   // 6. Four Capillary Perfusion Branches
-  if (vb.x > 410.0 && vb.x < 570.0 && vb.y > 165.0 && vb.y < 290.0) {
+  if (vb.x > uCapBox.x && vb.x < uCapBox.z && vb.y > uCapBox.y && vb.y < uCapBox.w) {
     float capD = 1e5;
     float capU = 0.0;
     for (int c = 0; c < ${CAP_SEG}; c++) {
@@ -314,8 +372,8 @@ void main() {
     }
   }
 
-  // 7. Exposed Venous Return Loop (VEN_MANIFOLD -> CVP_PLINTH only, clear of clamps & behind-heart solids)
-  if (vb.x > 85.0 && vb.x < 575.0 && vb.y > 42.0 && vb.y < 280.0) {
+  // 7. Exposed Venous Return Loop
+  if (vb.x > uVenBox.x && vb.x < uVenBox.z && vb.y > uVenBox.y && vb.y < uVenBox.w) {
     vec2 ven = traceVen(vb);
     float halfW = 2.2;
     if (ven.x < halfW) {
@@ -342,6 +400,7 @@ void main() {
 `;
 
 export interface HemodynamicGlController {
+  updateCameraAndRoutes: (scene: RigStaticScene) => void;
   draw: (
     telemetry: HemodynamicTelemetry,
     inputs: HemodynamicInputs,
@@ -354,31 +413,17 @@ export interface HemodynamicGlController {
 
 export function createHemodynamicGl(
   canvas: HTMLCanvasElement,
-  scene: RigStaticScene,
+  initialScene: RigStaticScene,
 ): HemodynamicGlController | null {
-  const artArchPts = samplePolylineProjected(scene.arterialArchGlRoute, ART_ARCH_PTS, scene.projection);
-  const artFeedPts = samplePolylineProjected(scene.arterialFeedGlRoute, ART_FEED_PTS, scene.projection);
-  const venPts = samplePolylineProjected(scene.venousRoute, VEN_PTS, scene.projection);
-  const capPts = new Float32Array(CAP_SEG * 2 * 3);
-  for (let i = 0; i < CAP_SEG; i++) {
-    const r = scene.capillaryRoutes[i];
-    if (!r || r.length < 2) continue;
-    const p0 = k.iso(r[0]!, scene.projection);
-    const p1 = k.iso(r[r.length - 1]!, scene.projection);
-    capPts[i * 6 + 0] = p0[0];
-    capPts[i * 6 + 1] = p0[1];
-    capPts[i * 6 + 2] = 0;
-    capPts[i * 6 + 3] = p1[0];
-    capPts[i * 6 + 4] = p1[1];
-    capPts[i * 6 + 5] = 1;
-  }
+  const initialRoutes = projectRoutesForScene(initialScene);
+  const a = initialScene.anchors;
+  let currentGlCam = initialScene.glCam;
 
-  const a = scene.anchors;
   const layer: GlLayerHandle | null = glLayer({
     canvas,
     fragment: FRAGMENT_SHADER,
     view: [RIG_VIEW_W, RIG_VIEW_H],
-    camera: scene.glCam,
+    camera: currentGlCam,
     uniforms: [
       'uViewBox',
       'uLight',
@@ -391,16 +436,28 @@ export function createHemodynamicGl(
       'uSvrNorm',
       'uFlowArt',
       'uFlowVen',
+      'uArchBox',
+      'uFeedBox',
+      'uCapBox',
+      'uVenBox',
+      'uArtArchPts',
+      'uArtFeedPts',
+      'uVenPts',
+      'uCapPts',
     ],
     fixed: {
       uHeart: [a.heartCenter[0], a.heartCenter[1], a.heartCenter[2]],
       uDome: [a.domeCenter[0], a.domeCenter[1], a.domeBottomZ, a.domeRadius - 2.6],
       uCvp: [a.cvpCenter[0], a.cvpCenter[1], a.cvpBottomZ, a.cvpRadius - 2.2],
       uTray: [a.perfusionTray.x, a.perfusionTray.y, a.perfusionTray.w, a.perfusionTray.d],
-      uArtArchPts: artArchPts,
-      uArtFeedPts: artFeedPts,
-      uVenPts: venPts,
-      uCapPts: capPts,
+      uArchBox: initialRoutes.archBox,
+      uFeedBox: initialRoutes.feedBox,
+      uCapBox: initialRoutes.capBox,
+      uVenBox: initialRoutes.venBox,
+      uArtArchPts: initialRoutes.artArchPts,
+      uArtFeedPts: initialRoutes.artFeedPts,
+      uVenPts: initialRoutes.venPts,
+      uCapPts: initialRoutes.capPts,
     },
     maxRatio: 1.5,
   });
@@ -408,8 +465,22 @@ export function createHemodynamicGl(
   if (!layer) return null;
 
   return {
+    updateCameraAndRoutes(scene: RigStaticScene) {
+      currentGlCam = scene.glCam;
+      const routes = projectRoutesForScene(scene);
+      layer.set({
+        uArchBox: routes.archBox,
+        uFeedBox: routes.feedBox,
+        uCapBox: routes.capBox,
+        uVenBox: routes.venBox,
+        uArtArchPts: routes.artArchPts,
+        uArtFeedPts: routes.artFeedPts,
+        uVenPts: routes.venPts,
+        uCapPts: routes.capPts,
+      });
+    },
     draw(telemetry, inputs, viewBox, theme, timeSec) {
-      const lvFrac = Math.max(0.05, Math.min(1, (telemetry.lvVolumeMl - 25) / 145));
+      const lvFrac = Math.max(0.14, Math.min(0.92, (telemetry.lvVolumeMl - 30) / 145));
       const ejection = telemetry.isSystole
         ? Math.max(0.1, Math.min(1, telemetry.aorticOpen * 0.8 + telemetry.aorticFlowLMin / 24))
         : 0.08;
@@ -422,6 +493,9 @@ export function createHemodynamicGl(
 
       layer.draw(
         {
+          uOrigin: currentGlCam.origin,
+          uK: currentGlCam.k,
+          uCam: currentGlCam.cam,
           uViewBox: viewBox,
           uLight: theme === 'light' ? 1.0 : 0.0,
           uPhase: telemetry.phase,
